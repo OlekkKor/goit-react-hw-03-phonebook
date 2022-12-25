@@ -1,0 +1,24 @@
+.divbtn{ 
+    margin-top: 10px;
+    margin-bottom: 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+.button{
+    text-align: center;
+    width: 90px;
+    height: 40px;
+    border-radius: 7px;
+    background-color: blue;
+    color: white;
+}
+
+
+.button:hover{
+ background-color: black;
+}
