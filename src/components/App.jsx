@@ -1,88 +1,103 @@
-import { Component } from 'react';
-import { getElement } from './Service/Api';
-import { Searchbar } from './Searchbar/Searchbar';
-import { Modal } from './Modal/Modal';
-import { ImageGallery } from './ImageGallery/ImageGallery';
+import { Component } from "react";
+import { ContactForm } from "./ContactForm/ContactForm";
+import { Filter } from "./Filter/Filter";
+import { ContactList } from "./ContactList/ContactList";
+import { nanoid } from 'nanoid';
 
-import { Button } from './Button/button';
-import { Loader } from './Loader/Loader';
+export class App extends Component{
 
-export class App extends Component {
   state = {
-    page: 1,
-    query: '',
-    images: [],
-    error: '',
-    largeImageURL: '',
-    isLoading: false,
-  };
-
-  componentDidUpdate(_, prevState) {
-    try {
-      if (
-        prevState.page !== this.state.page ||
-        prevState.query !== this.state.query
-      ) {
-        // this.setState({ isLoading: true });
-        const response = getElement(this.state.query, this.state.page);
-        console.dir(response);
-
-        response.then(({ hits, total, totalHits }) => {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...hits],
-          }));
-        });
-      }
-      
-    } catch (error) {
-      this.setState({ error: error.message });
-    } finally { 
-      // this.setState({ isLoading: false }) 
-      }
+    contacts: [],
+    filter: '',
   }
 
-  onFormSubmit = info => {
+componentDidMount(){
+  
+  const initialContact = localStorage.getItem('contact');
+  const parsedContact = JSON.parse(initialContact);
+  if (parsedContact){this.setState({
+    contacts: parsedContact,
+  })}
+}
+
+
+
+componentDidUpdate(){
+  localStorage.setItem('contact', JSON.stringify(this.state.contacts));
+}
+
+
+  onInputChange = filter => {
     this.setState({
-      query: info,
-      page: 1,
-      images: [],
-      error: '',
+     filter,
     });
   };
 
-  onImageClick = link => {
-    this.setState({
-      largeImageURL: link,
-    });
+
+  filteredContacts = () => {
+    const { contacts, filter } = this.state;
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
   };
 
-  onButtonClick = () => {
+
+  deleteToDo = id => {
     this.setState(prevState => ({
-      page: prevState.page + 1,
+      contacts: prevState.contacts.filter(contact => contact.id !== id),
+    }))}
+
+
+
+  onFormSubmit = info => {
+    const isContactRepeat = this.state.contacts.find(
+      el => el.name === info.name
+    );
+    if (isContactRepeat) {
+      alert('Already in Contacts');
+      return;
+    }
+    const contact = {
+      ...info,
+      id: nanoid(),
+    };
+    this.setState(prevState => ({
+      contacts: [...prevState.contacts, contact],
     }));
   };
 
-  render() {
-    console.log(this.state);
-    return (
-      <>
-        <Searchbar onFormSubmit={this.onFormSubmit} />
-        {this.state.isLoading && (<Loader />)} 
-        <ImageGallery
-          img={this.state.images}
-          onImageClick={this.onImageClick}
-        />
-        {this.state.images.length > 1 && (
-          <Button onButtonClick={this.onButtonClick} />
-        )}
 
-        {this.state.largeImageURL.length > 0 && (
-          <Modal
-            largeImgUrl={this.state.largeImageURL}
-            onImageClick={this.onImageClick}
-          />
-        )}
-      </>
-    );
+  render() {
+    const filteredContact = this.filteredContacts();
+    const {filter} = this.state;
+    return( 
+
+      <div style={{
+        width: 400,
+        padding: "12px 16px",
+        borderRadius: 20,
+        backgroundColor: "#006d00",
+        color: "white",
+        textAlign: "center",
+      }} >
+      <h1>Phonebook</h1>
+      <ContactForm onFormSubmit={this.onFormSubmit} btnText="Add contact" />
+
+      <h2>Contacts</h2>
+      <Filter onInputChange={this.onInputChange} />
+
+      
+      {filter.length > 0 ? (
+       <ContactList data={filteredContact} deleteToDo={this.deleteToDo}/>
+      ) : (
+        <ContactList data={this.state.contacts} deleteToDo={this.deleteToDo}/>
+      )}
+      </div>
+    )
   }
-}
+
+
+} 
+ 
+ 
+
